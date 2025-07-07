@@ -1,0 +1,177 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:probashi_power_project/Data_Models/post_models.dart';
+
+import '../../utils/color.dart';
+import 'package:http/http.dart'as http;
+class PurchacesScreen2 extends StatefulWidget {
+  final PackageListModel? seletPackage;
+  const PurchacesScreen2({super.key, this.seletPackage});
+
+  @override
+  State<PurchacesScreen2> createState() => _PurchacesScreen2State();
+}
+
+class _PurchacesScreen2State extends State<PurchacesScreen2> {
+
+  List<BankModel> BankList=[];
+  List<PackageListModel>PackList=[];
+
+
+
+  Future<void>fetchDobulData()async{
+    try{
+      final BankkFuture=http.get(Uri.parse("http://probashipower.com/api/bank-ac-info"));
+      final PackageFuture=http.get(Uri.parse("http://probashipower.com/api/package-list"));
+
+      final response=await Future.wait([BankkFuture,PackageFuture]);
+      final Bankresponse=response[0];
+      final Packageresponse=response[1];
+
+      if(Bankresponse.statusCode==200 && Packageresponse.statusCode==200){
+        final BankData=jsonDecode(response[0].body) as List;
+        final PackageData=jsonDecode(response[1].body) as List;
+
+        setState(() {
+          BankList=BankData.map((a)=>BankModel.fromJson(a)).toList();
+          PackList=PackageData.map((b)=>PackageListModel.fromJson(b)).toList();
+        });
+      }else{
+        throw Exception("Api Error: Bank =${Bankresponse.statusCode},"
+            "Package=${Packageresponse.statusCode}");
+
+      }
+
+
+    }catch(e){
+      print("Error Loading data ${e}");
+    }
+  }
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    fetchDobulData();
+  }
+  @override
+  Widget build(BuildContext context) {
+    final package=widget.seletPackage;
+    if(package==null) {
+      return Center(
+        child: Text("কোনো প্যাকেজ ডেটা পাওয়া যায়নি"),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+              color: AppColor().ScendaryColor,
+              border: Border.all(color: AppColor().colorBlue,
+                  width: 3
+              )
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+            child: Column(
+              children: [
+                Image.asset("assets/homepageicon/taka.png",
+                  height: 60,width: 60,),
+                SizedBox(height: 20,),
+                Text("প্যাকেজ ক্রয়",
+                  style: TextStyle(
+                      fontFamily: "NotoSansBengali",
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold
+                  ),),
+                SizedBox(height: 20,),
+               ...BankList.map((item)=>Padding(
+                   padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+               child: Row(
+                 children: [
+                   Text("${item.acName}-${item.acNo}",
+                   style: TextStyle(
+                     fontSize: 20,
+                     fontWeight: FontWeight.w400,
+                     fontFamily: "NotoSansBengali",
+                   ),
+                   )
+                 ],
+               ),
+
+               )),
+                SizedBox(height: 20,),
+                 PackList.isEmpty?Center(child: CircularProgressIndicator(),):
+                 Container(
+                      //height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColor().colorWhit,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30,vertical: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("প্যাকেজ নাম - ${package.name}",
+                              style: TextStyle(
+                                  fontFamily: "NotoSansBengali",
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18
+                              ),
+                            ),
+                            SizedBox(height: 10,),
+                            Text("প্যাকেজ মূল্য -${package.rate}",
+                              style: TextStyle(
+                                  fontFamily: "NotoSansBengali",
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18
+                              ),),
+                            SizedBox(height: 30,),
+                            Text("সময়কাল-${package.duration},",
+                              style: TextStyle(
+                                  fontFamily: "NotoSansBengali",
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18
+                              ),),
+                            SizedBox(height: 25,),
+                            Text("সুবিধা -${package.feature}",
+                              style: TextStyle(
+                                  fontFamily: "NotoSansBengali",
+                                  fontSize: 18
+                              ),
+                            ),
+                            SizedBox(height: 20,),
+
+                            Center(
+                              child: ElevatedButton(onPressed: () {
+                              },
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColor().colorBlue,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      minimumSize: Size(140, 40)
+                                  ), child: Text("ক্রয় করুন ",style: TextStyle(
+                                      fontFamily: "NotoSansBengali",
+                                      color: Colors.white,
+                                      fontSize: 16
+                                  ))),
+                            )
+                          ],
+                        ),
+                      ),
+                    )
+
+              ],
+            ),
+          ),
+
+        ),
+      ),
+    );
+  }
+}
